@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="project_see_only_contract" model="ir.rule">
+        <field name="name">See Only SLA Contracts</field>
+        <field name="model_id" ref="project.model_project_project"/>
+        <field name="domain_force">[('is_contract', '=', True)]</field>
+        <field name="groups" eval="[(4, ref('helpdesk.group_helpdesk_user'))]"/>
+    </record>
+    <record id="project_see_only_project" model="ir.rule">
+        <field name="name">See Only Sales Projects</field>
+        <field name="model_id" ref="project.model_project_project"/>
+        <field name="domain_force">[('is_contract', '=', False)]</field>
+        <field name="groups" eval="[(4, ref('project.group_project_user'))]"/>
+    </record>
+
+    <!-- Portal -->
+    <record id="sla_product_rule_portal" model="ir.rule">
+        <field name="name">SLA Product: portal users: portal and following</field>
+        <field name="model_id" ref="wr_project.model_project_sla_line"/>
+        <field name="domain_force">[
+            '&amp;',
+            ('project_id.privacy_visibility', '=', 'portal'),
+            ('project_id.message_partner_ids', 'child_of', [user.partner_id.commercial_partner_id.id]),
+            ]
+        </field>
+        <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
+    </record>
+
+</odoo>

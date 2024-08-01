@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <!-- SLA Contract -->
+    <record id="project_sequence_form_view" model="ir.ui.view">
+        <field name="name">Project.sequence.project.edit</field>
+        <field name="model">project.project</field>
+        <field name="priority" eval="240"/>
+        <field name="inherit_id" ref="project.edit_project"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div//div[@id='subtask_settings']" position="after">
+                <div class="col-lg-6 o_setting_box" id="sla_settings" groups="helpdesk.group_helpdesk_manager">
+                    <div class="o_setting_left_pane">
+                        <field name="is_contract"/>
+                    </div>
+                    <div class="o_setting_right_pane">
+                        <label for="is_contract"/>
+                        <div class="text-muted">
+                            Service Level Agreement Contract
+                        </div>
+                    </div>
+                </div>
+            </xpath>
+            <xpath expr="//group//group//field[@name='label_tasks']" position="attributes">
+                <attribute name="readonly">1</attribute>
+            </xpath>
+            <xpath expr="//header" position="inside">
+                <button
+                        name="action_open_child_project"
+                        class="oe_highlight"
+                        type="object"
+                        data-hotkey="q"
+                        string="Sub Contract"
+                        attrs="{'invisible': [['is_contract','=',False]]}"
+                />
+            </xpath>
+            <xpath expr="//div[@name='button_box']//button[1]" position="after">
+                <button
+                        name="action_open_child_project"
+                        class="oe_stat_button"
+                        type="object"
+                        icon="fa-folder"
+                        attrs="{'invisible': [['is_contract','=',False]]}"
+                >
+                    <field
+                            string="Sub SLAs"
+                            name="child_ids_count"
+                            widget="statinfo"
+                    />
+                </button>
+            </xpath>
+
+            <!--
+            <div name="button_box" position="inside">
+                <button
+                    name="action_open_child_project"
+                    class="oe_stat_button"
+                    type="object"
+                    icon="fa-tasks"
+                    attrs="{'invisible': [['is_contract','=',False]]}"
+                >
+                    <field
+                        string="Sub SLAs"
+                        name="child_ids_count"
+                        widget="statinfo"
+                    />
+                </button>
+            </div>
+            -->
+            <field name="user_id" position="after">
+                <field name="parent_id" attrs="{'invisible': [['is_contract','=',False]]}"/>
+            </field>
+            <field name="analytic_account_id" position="replace"/>
+            <field name="partner_id" position="after">
+                <field name="support_type" attrs="{'invisible': [['is_contract','=',False]]}"/>
+                <field name="sle_cover_time" attrs="{'invisible': [['is_contract','=',False]]}"/>
+                <field name="sla_policy_ids" widget="many2many_tags" attrs="{'invisible': [['is_contract','=',False]]}"/>
+            </field>
+            <xpath expr="//page[@name='description']" position="after">
+                <page string="Sales Info" attrs="{'invisible': [['is_contract','=',False]]}">
+                    <group>
+                        <group>
+                            <field
+                                    name="opportunity_id"
+                                    domain="[('partner_id.commercial_partner_id', '=', partner_id), ('won_status','=','won')]"
+                            />
+                            <field name="analytic_account_id" groups="analytic.group_analytic_accounting"/>
+                        </group>
+                        <group>
+                            <field name="opp_user_id"/>
+                            <field name="opp_project_user_id"/>
+                            <field name="opp_industry_id"/>
+                        </group>
+                    </group>
+                </page>
+                <page string="Covered Products" attrs="{'invisible': [['is_contract','=',False]]}">
+                    <field
+                            name="sla_line"
+                            widget="section_and_note_one2many"
+                            mode="tree">
+                        <tree string="Products" editable="bottom">
+                            <control>
+                                <create name="add_product_control" string="Add a product"/>
+                            </control>
+                            <field name="product_temp_id"/>
+                            <field name="product_brand_id"/>
+                            <field name="product_serial"/>
+                        </tree>
+                    </field>
+                    <group name="total_sla">
+                        <group string="Contract Total (Tax Excl.)">
+                            <div class="o_row">
+                                <h3>
+                                    <field name="project_currency_id"/>
+                                    <field name="project_amount_untaxed"/>
+                                </h3>
+                            </div>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+    <record id="view_contract_tree" model="ir.ui.view">
+        <field name="name">project.contract.tree</field>
+        <field name="model">project.project</field>
+        <field name="arch" type="xml">
+            <tree decoration-muted="active == False" string="Contracts" delete="0" multi_edit="1" sample="1">
+                <field name="sequence" optional="show" widget="handle"/>
+                <field name="message_needaction" invisible="1"/>
+                <field name="active" invisible="1"/>
+                <field name="name" string="Name" class="font-weight-bold"/>
+                <field name="type_id" optional="show"/>
+                <field name="sla_policy_ids" widget="many2many_tags"/>
+                <field name="partner_id" optional="show" string="Customer"/>
+                <field name="privacy_visibility" optional="hide"/>
+                <field name="company_id" optional="show" groups="base.group_multi_company"
+                       options="{'no_create': True, 'no_create_edit': True}"/>
+                <field name="date_start" string="Start Date" widget="daterange" options="{'related_end_date': 'date'}"/>
+                <field name="date" string="End Date" widget="daterange" options="{'related_start_date': 'date_start'}"/>
+                <field name="user_id" optional="show" string="Project Manager" widget="many2one_avatar_user"
+                       options="{'no_open':True, 'no_create': True, 'no_create_edit': True}"/>
+                <field name="sle_cover_time" optional="show"/>
+                <field name="project_currency_id"/>
+                <field name="project_amount_untaxed"/>
+                <field name="company_currency_amount" optional="hide"/>
+                <field name="stage_id" options="{'no_open': True}" optional="show"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_project_kanban" model="ir.ui.view">
+        <field name="name">project.project.kanban.inherited</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.view_project_kanban"/>
+        <field name="arch" type="xml">
+            <field name="rating_status" position="after">
+                <field name="parent_id"/>
+            </field>
+            <xpath
+                    expr="//div[hasclass('o_project_kanban_main')]/div[last()]"
+                    position="after"
+            >
+                <div class="o_primary">
+                    <span>
+                        <t t-esc="record.parent_id.value"/>
+                    </span>
+                </div>
+            </xpath>
+        </field>
+    </record>
+    <record id="view_project_project_filter" model="ir.ui.view">
+        <field name="name">project.project.filter</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.view_project_project_filter"/>
+        <field name="type">search</field>
+        <field name="arch" type="xml">
+            <field name="name" position="after">
+                <field name="parent_id"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="project_project_action_only_sla" model="ir.actions.act_window">
+        <field name="name">SLA Contracts</field>
+        <field name="res_model">project.project</field>
+        <field name="domain">[('is_contract', '=', True)]</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="view_id" ref="project.view_project"/>
+        <field name="search_view_id" ref="project.view_project_project_filter"/>
+        <field name="target">main</field>
+        <field name="context">{
+            'default_is_contract': True,
+            'default_allow_timesheets': False,
+            'default_allow_billable': False,
+            'default_analytic_account_id': 484,
+            'default_label_tasks':'Tickets'
+            }
+        </field>
+    </record>
+    <record id="project_project_action_only_sla_view_tree" model="ir.actions.act_window.view">
+        <field name="sequence" eval="1"/>
+        <field name="view_mode">tree</field>
+        <field name="view_id" ref="view_contract_tree"/>
+        <field name="act_window_id" ref="project_project_action_only_sla"/>
+    </record>
+
+    <menuitem
+            id="sla_contract_menu"
+            name="SLA Contracts"
+            sequence="3"
+            action="project_project_action_only_sla"
+            parent="helpdesk.helpdesk_menu_config"
+            groups="helpdesk.group_helpdesk_manager"
+    />
+    <menuitem
+        name="SLA Contract Types"
+        id="contract_category"
+        parent="helpdesk.helpdesk_menu_config"
+        action="project_type.action_project_type"
+        sequence="5"
+        groups="helpdesk.group_helpdesk_manager"
+    />
+
+    <!-- SLA Contract Product -->
+    <record id="view_contract_product_tree" model="ir.ui.view">
+        <field name="name">project.contract.product.tree</field>
+        <field name="model">project.sla.line</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="partner_id"/>
+                <field name="project_id"/>
+                <field name="product_brand_id"/>
+                <field name="product_temp_id"/>
+                <field name="product_serial"/>
+            </tree>
+        </field>
+    </record>
+</odoo>

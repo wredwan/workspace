@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<odoo>
+    <record id="view_ticket_custom_form" model="ir.ui.view">
+            <field name="name">helpdesk.ticket.custom.form</field>
+            <field name="model">helpdesk.ticket</field>
+            <field name="inherit_id" ref="helpdesk.helpdesk_ticket_view_form"/>
+            <field name="arch" type="xml">
+                <field name="partner_id" position="before">
+                    <field name="commercial_partner_id" invisible="1"/>
+                    <field name="sla_product_id" domain="[('project_id.active','=',True),('project_id.partner_id', '=', commercial_partner_id)]" options="{'no_create': True}"/>
+                    <field name="sla_project_id"/>
+                </field>
+            </field>
+        </record>
+    <record id="view_ticket_custom_tree" model="ir.ui.view">
+            <field name="name">helpdesk.ticket.custom.tree</field>
+            <field name="model">helpdesk.ticket</field>
+            <field name="inherit_id" ref="helpdesk.helpdesk_tickets_view_tree"/>
+            <field name="arch" type="xml">
+                <field name="partner_id" position="before">
+                    <field name="sla_project_id" optional="show"/>
+                    <field name="sla_product_id" optional="show"/>
+                </field>
+            </field>
+        </record>
+    <record id="view_ticket_custom_search" model="ir.ui.view">
+            <field name="name">helpdesk.ticket.custom.search</field>
+            <field name="model">helpdesk.ticket</field>
+            <field name="inherit_id" ref="helpdesk.helpdesk_tickets_view_search"/>
+            <field name="arch" type="xml">
+                <xpath expr="//search//field[@name='user_id']" position="after">
+                    <field name="sla_project_id"/>
+                    <field name="sla_product_id"/>
+                </xpath>
+                <xpath expr="//group//filter[@name='partner']" position="after">
+                    <filter string="SLA Contract" name="contract" context="{'group_by': 'sla_project_id'}"/>
+                    <filter string="Product" name="product" context="{'group_by': 'sla_product_id'}"/>
+                </xpath>
+            </field>
+        </record>
+</odoo>

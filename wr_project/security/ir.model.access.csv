@@ -1,0 +1,8 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_project_sla_line_user,access SLA project line user,wr_project.model_project_sla_line,helpdesk.group_helpdesk_user,1,0,0,0
+access_project_sla_line_admin,access SLA project line admin,wr_project.model_project_sla_line,helpdesk.group_helpdesk_manager,1,1,1,1
+access_project_type_all,project.type helpdesk user,project_type.model_project_type,helpdesk.group_helpdesk_user,1,0,0,0
+access_project_type_manager,project.type helpdesk manager,project_type.model_project_type,helpdesk.group_helpdesk_manager,1,1,1,1
+access_all_contarct_user,contract helpdesk user,project.model_project_project,helpdesk.group_helpdesk_user,1,0,0,0
+access_all_contarct_manager,contract helpdesk manager,project.model_project_project,helpdesk.group_helpdesk_manager,1,1,1,0
+access_sla_product_portal,sla.product.portal,wr_project.model_project_sla_line,base.group_portal,1,0,0,0

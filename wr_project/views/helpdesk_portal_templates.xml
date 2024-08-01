@@ -1,0 +1,557 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <template id="helpdesk.tickets_followup" name="Helpdesk Tickets">
+            <t t-call="portal.portal_layout">
+                <t t-set="wrapwrap_classes" t-value="'o_portal_bg_dark'"/>
+
+                <t t-set="o_portal_fullwidth_alert" groups="helpdesk.group_helpdesk_user">
+                    <t t-call="portal.portal_back_in_edit_mode">
+                        <t t-set="backend_url"
+                           t-value="'/web#model=helpdesk.ticket&amp;id=%s&amp;view_type=form' % (ticket.id)"/>
+                    </t>
+                </t>
+
+                <t t-call="portal.portal_record_layout">
+                    <t t-set="card_header">
+                        <div class="row no-gutters">
+                            <div class="col-md">
+                                <h5 class="d-flex mb-1 mb-md-0">
+                                    <div class="col-9 text-truncate">
+                                        <span t-field="ticket.name"/>
+                                        <small class="text-muted ">(#<span t-field="ticket.id"/>)
+                                        </small>
+                                    </div>
+                                    <div class="col-3 text-right">
+                                        <small class="text-right">Status:</small>
+                                        <span t-field="ticket.stage_id.name" class=" badge badge-pill badge-info"
+                                              title="Current stage of this ticket"/>
+                                    </div>
+                                </h5>
+                            </div>
+                        </div>
+                    </t>
+                    <t t-set="card_body">
+                        <div class="row mb-4">
+                            <strong class="col-lg-2">Reported on</strong>
+                            <span class="col-lg-10" t-field="ticket.create_date" t-options='{"widget": "date"}'/>
+                        </div>
+                        <div class="row mb-4" t-if="ticket.team_id.portal_show_rating">
+                            <strong class="col-lg-2">Managed by</strong>
+                            <span class="col-lg-10">
+                                <a t-attf-href="/helpdesk/rating/#{ticket.team_id.id}">
+                                    <span t-field="ticket.team_id.name"/>
+                                </a>
+                            </span>
+                        </div>
+                        <div class="row mb-4" t-if="ticket.partner_id">
+                            <strong class="col-lg-2">Reported by</strong>
+                            <div class="col-lg-10">
+                                <div class="row">
+                                    <div class="col flex-grow-0 pr-3">
+                                        <img class="rounded-circle o_portal_contact_img"
+                                             t-attf-src="#{image_data_uri(ticket.partner_id.avatar_1024)}"
+                                             alt="Contact"/>
+                                    </div>
+                                    <div class="col pl-sm-0">
+                                        <div t-field="ticket.partner_id"
+                                             t-options='{"widget": "contact", "fields": ["name", "email"], "no_marker": true}'/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mb-4" t-if="ticket.user_id">
+                            <strong class="col-lg-2">Assigned to</strong>
+                            <div class="col-lg-10">
+                                <div class="row">
+                                    <div class="col flex-grow-0 pr-3">
+                                        <img class="rounded-circle o_portal_contact_img"
+                                             t-attf-src="#{image_data_uri(ticket.user_id.avatar_1024)}" alt="Contact"/>
+                                    </div>
+                                    <div class="col pl-sm-0">
+                                        <div t-field="ticket.user_id"
+                                             t-options='{"widget": "contact", "fields": ["name", "email"], "no_marker": true}'/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mb-4" t-if="ticket.sla_product_id">
+                            <strong class="col-lg-2">Product</strong>
+                            <div class="col-lg-10">
+                                <div class="row">
+
+                                    <div class="col pl-sm-0">
+                                        <div t-field="ticket.sla_product_id"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mb-4" t-if="ticket.sla_project_id">
+                            <strong class="col-lg-2">SLA Contract</strong>
+                            <div class="col-lg-10">
+                                <div class="row">
+                                    <div class="col pl-sm-0">
+                                        <div t-field="ticket.sla_project_id"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mb-4" name="description">
+                            <strong class="col-lg-2">Description</strong>
+                            <div t-if="not is_html_empty(ticket.description)" class="col-lg-10"
+                                 t-field="ticket.description"/>
+                            <div t-else="" class="col-lg-10">
+                                <em class="text-muted">
+                                    <small>No description</small>
+                                </em>
+                            </div>
+                        </div>
+                    </t>
+                </t>
+
+
+                <div t-if="ticket.team_id.allow_portal_ticket_closing and not ticket.stage_id.is_close and not ticket.closed_by_partner"
+                     class="modal" tabindex="-1" role="dialog" id="helpdesk_ticket_close_modal">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Close ticket</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">×</button>
+                            </div>
+                            <div class="modal-body">
+                                <p>Are you sure you wish to proceed?</p>
+                            </div>
+                            <div class="modal-footer">
+                                <a role="button" class="btn btn-primary"
+                                   t-att-href="'/my/ticket/close/%s/%s' % (ticket.id, ticket.access_token)">Close the
+                                    ticket
+                                </a>
+                                <button type="button" class="btn btn-light" data-dismiss="modal">Discard</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div t-if="ticket.team_id.allow_portal_ticket_closing and not ticket.stage_id.is_close and not ticket.closed_by_partner"
+                     class="text-center mt-5">
+                    <button class="btn btn-primary mb-1 pt-1" data-target="#helpdesk_ticket_close_modal"
+                            data-toggle="modal">
+                        <small>
+                            <b>Close this ticket</b>
+                        </small>
+                    </button>
+                    <p>
+                        <small>
+                            If the issue has been solved, you can close the request.
+                        </small>
+                    </p>
+                </div>
+
+                <div class="o_portal_messages_container mt32">
+                    <h4>Message and communication history</h4>
+                    <t t-call="portal.message_thread">
+                        <t t-set="token" t-value="ticket.access_token"/>
+                        <t t-set="object" t-value="ticket"/>
+                        <t t-set="pid" t-value="pid"/>
+                        <t t-set="hash" t-value="hash"/>
+                        <t t-set="disable_composer" t-value="ticket.stage_id.is_close"/>
+                    </t>
+                </div>
+            </t>
+        </template>
+
+        <!-- add new ticket button to list of tickets portal view -->
+        <template id="helpdesk.portal_helpdesk_ticket">
+            <t t-call="portal.portal_layout">
+                <t t-set="breadcrumbs_searchbar" t-value="True"/>
+
+                <t t-call="portal.portal_searchbar">
+                    <t t-set="title">Tickets</t>
+                </t>
+                <form method="POST" t-attf-action="/new/ticket">
+                    <button
+                            name="create_new_ticket"
+                            type="action"
+                            class="btn btn-primary"
+                            style="float: right; margin-right: 0px; margin-bottom: 5px;"
+                    >New Ticket
+                    </button>
+                    <input
+                            type="hidden"
+                            name="csrf_token"
+                            t-att-value="request.csrf_token()"
+                    />
+                </form>
+
+                <div t-if="not grouped_tickets" class="alert alert-info">
+                    There are currently no Ticket for your account.
+                </div>
+                <t t-else="">
+                    <t t-call="portal.portal_table">
+                        <t t-foreach="grouped_tickets" t-as="tickets">
+                            <thead>
+                                <tr t-attf-class="{{'thead-light' if not groupby == 'none' else ''}}">
+                                    <th class="text-left">Ref</th>
+                                    <th t-if="groupby == 'none'" class="w-100">Description</th>
+                                    <th t-else="">
+                                        <em class="font-weight-normal text-muted">Tickets in stage:</em>
+                                        <span t-field="tickets[0].stage_id.name"/>
+                                    </th>
+                                    <th/>
+                                    <th t-if="groupby != 'stage'" class="text-center">Stage</th>
+                                </tr>
+                            </thead>
+                            <t t-foreach="tickets" t-as="ticket">
+                                <tr>
+                                    <td class="text-left">
+                                        <a t-attf-href="/helpdesk/ticket/#{ticket.id}">
+                                            <small>#</small>
+                                            <t t-esc="ticket.id"/>
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <a t-attf-href="/helpdesk/ticket/#{ticket.id}">
+                                            <span t-field="ticket.name"/>
+                                        </a>
+                                    </td>
+                                    <td/>
+                                    <td t-if="groupby != 'stage'" class="text-center">
+                                        <span class="badge badge-pill badge-info" t-field="ticket.stage_id.name"/>
+                                    </td>
+                                </tr>
+                            </t>
+                        </t>
+                    </t>
+                </t>
+            </t>
+        </template>
+
+        <!-- add new ticket button to my account portal view -->
+        <template id="portal_my_home_helpdesk_ticket" name="submit a ticket" customize_show="True"
+                  inherit_id="helpdesk.portal_my_home_helpdesk_ticket">
+            <xpath expr="//t[@t-call='portal.portal_docs_entry']" position="before">
+                <t t-call="portal.portal_docs_entry">
+                    <t t-set="title">Submit a ticket</t>
+                    <t t-set="url" t-value="'/new/ticket'"/>
+                </t>
+                <!--
+                <form method="POST" t-attf-action="/new/ticket">
+                    <input
+                            type="hidden"
+                            name="csrf_token"
+                            t-att-value="request.csrf_token()"
+                    />
+                    <button
+                            name="create_new_ticket"
+                            type="action"
+                            class="btn btn-primary"
+                            style="float: right; margin-right: 0px; margin-bottom: 5px;"
+                    >New Ticket
+                    </button>
+                </form>
+                -->
+            </xpath>
+        </template>
+
+        <template id="portal_create_ticket" name="Create Ticket">
+            <t t-call="website.layout">
+                <div id="wrap" class="oe_structure oe_empty">
+                    <br/>
+                    <section class="s_parallax parallax bg-black-50 justify-content-center o_colored_level pt88"
+                             data-scroll-background-ratio="-1.35" data-snippet="s_parallax" data-name="Parallax"
+                             style="background-image: none;">
+                        <span class="s_parallax_bg oe_img_bg o_bg_img_center"
+                              style="background-image: url(&quot;https://odoocdn.com/openerp_enterprise/static/src/img/support/support_banner.jpg&quot;);"/>
+                        <div class="o_we_bg_filter bg-black-50"/>
+                        <div class="oe_structure oe_empty"/>
+                        <div class="container">
+                            <div class="row d-flex justify-content-start">
+                                <p>
+                                    <br/>
+                                </p>
+                                <p>
+                                    <br/>
+                                </p>
+                                <p>
+                                    <br/>
+                                </p>
+                                <h1>
+                                    <br/>
+                                </h1>
+                                <h2>Submit a support ticket
+                                    <br/>
+                                    <br/>
+                                </h2>
+                                <p>
+                                    <br/>
+                                </p>
+                                <p>
+                                    <br/>
+                                </p>
+                                <p>
+                                    <br/>
+                                </p>
+                            </div>
+                        </div>
+                    </section>
+                    <section class="s_website_form o_colored_level pt0 pb120 o_half_screen_height" data-vcss="001"
+                             data-snippet="s_website_form" data-name="Form" style="background-image: none;">
+                        <div class="container">
+                            <form
+                                    action="/website/form/"
+                                    method="post"
+                                    enctype="multipart/form-data"
+                                    class="o_mark_required"
+                                    data-mark="*"
+                                    data-model_name="helpdesk.ticket"
+                                    data-success-mode="redirect"
+                                    data-success-page="/your-ticket-has-been-submitted"
+                                    data-pre-fill="true">
+                                <input
+                                        type="hidden"
+                                        name="csrf_token"
+                                        t-att-value="request.csrf_token()"/>
+                                <div class="s_website_form_rows row s_col_no_bgcolor">
+
+                                    <!-- your name div -->
+                                    <div
+                                            class="form-group s_website_form_field col-12 s_website_form_required col-lg-8"
+                                            data-type="char"
+                                            data-name="Field">
+                                        <div class="row s_col_no_resize s_col_no_bgcolor">
+                                            <label style="width: 200px;"
+                                                   class="col-form-label col-sm-auto s_website_form_label"
+                                                   for="partner_name">
+                                                <span class="s_website_form_label_content">Your Name</span>
+                                                <span class="s_website_form_mark">*</span>
+                                            </label>
+                                            <div class="col-sm">
+                                                <input
+                                                        type="text"
+                                                        class="form-control s_website_form_input"
+                                                        name="partner_name"
+                                                        required="1"
+                                                        readonly="1"
+                                                        data-fill-with="name"
+                                                        id="partner_name"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- your email div -->
+                                    <div
+                                            class="form-group s_website_form_field col-12 s_website_form_required col-lg-8"
+                                            data-type="email"
+                                            data-name="Field">
+                                        <div class="row s_col_no_resize s_col_no_bgcolor">
+                                            <label style="width: 200px;"
+                                                   class="col-form-label col-sm-auto s_website_form_label"
+                                                   for="ol4d3nkr5wlm">
+                                                <span class="s_website_form_label_content">Your Email</span>
+                                                <span class="s_website_form_mark">*</span>
+                                            </label>
+                                            <div class="col-sm">
+                                                <input
+                                                        type="email"
+                                                        class="form-control s_website_form_input"
+                                                        name="partner_email"
+                                                        required="1"
+                                                        readonly="1"
+                                                        data-fill-with="email"
+                                                        id="partner_email"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- your phone div -->
+                                    <div
+                                            class="form-group s_website_form_field col-12 col-lg-8"
+                                            data-type="char"
+                                            data-name="Field">
+                                        <div class="row s_col_no_resize s_col_no_bgcolor">
+                                            <label style="width: 200px;"
+                                                   class="col-form-label col-sm-auto s_website_form_label"
+                                                   for="partner_phone">
+                                                <span class="s_website_form_label_content">Your Phone</span>
+                                            </label>
+                                            <div class="col-sm">
+                                                <input
+                                                        type="text"
+                                                        class="form-control s_website_form_input"
+                                                        name="partner_phone"
+                                                        id="partner_phone"
+                                                        data-fill-with="undefined"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- cc email div -->
+                                    <div
+                                            class="form-group s_website_form_field col-12 col-lg-8"
+                                            data-type="char"
+                                            data-name="Field">
+                                        <div class="row s_col_no_resize s_col_no_bgcolor">
+                                            <label style="width: 200px;"
+                                                   class="col-form-label col-sm-auto s_website_form_label"
+                                                   for="email_cc">
+                                                <span class="s_website_form_label_content">Email cc</span>
+                                            </label>
+                                            <div class="col-sm">
+                                                <input
+                                                        type="text"
+                                                        class="form-control s_website_form_input"
+                                                        name="email_cc"
+                                                        id="email_cc"
+                                                        data-fill-with="undefined"/>
+                                                <div class="s_website_form_field_description small form-text text-muted">
+                                                    Separate email addresses with a comma.
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- SLA Product div -->
+                                    <div
+                                            class="form-group s_website_form_field col-12 col-lg-8 s_website_form_model_required"
+                                            data-type="many2one"
+                                            data-name="Field">
+                                        <div class="row s_col_no_resize s_col_no_bgcolor">
+                                            <label style="width: 200px;"
+                                                   class="col-form-label col-sm-auto s_website_form_label"
+                                                   for="sla_product_id">
+                                                <span class="s_website_form_label_content">Product</span>
+                                                <span class="s_website_form_mark">*</span>
+                                            </label>
+                                            <div class="col-sm">
+                                                <select
+                                                        class="form-control s_website_form_input"
+                                                        id="sla_product_id"
+                                                        name="sla_product_id"
+                                                        required="true">
+                                                    <option value=""/>
+                                                    <t t-foreach="sla_products" t-as="product">
+                                                        <option t-attf-value="#{product.id}">
+                                                            <t t-if="product.default_code and product.product_serial">
+                                                                <t t-esc="product.product_brand_id.name"/>
+                                                                <span>Part No.</span>
+                                                                [<t t-esc="product.default_code"/>]
+                                                                <span>Serial No.</span>
+                                                                [<t t-esc="product.product_serial"/>]
+                                                            </t>
+                                                            <t t-if="product.default_code and not product.product_serial">
+                                                                <t t-esc="product.product_brand_id.name"/>
+                                                                <span>Part No.</span>
+                                                                [<t t-esc="product.default_code"/>]
+                                                            </t>
+                                                            <t t-else="">
+                                                                <t t-esc="product.product_temp_id.name"/>
+                                                            </t>
+                                                        </option>
+                                                    </t>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- ticket type -->
+                                    <div
+                                            class="form-group s_website_form_field col-12 col-lg-8 s_website_form_model_required"
+                                            data-type="many2one"
+                                            data-name="Field">
+                                        <div class="row s_col_no_resize s_col_no_bgcolor">
+                                            <label style="width: 200px;"
+                                                   class="col-form-label col-sm-auto s_website_form_label"
+                                                   for="ticket_type_id">
+                                                <span class="s_website_form_label_content">Type</span>
+                                                <span class="s_website_form_mark">*</span>
+                                            </label>
+                                            <div class="col-sm">
+                                                <select
+                                                        class="form-control s_website_form_input"
+                                                        id="ticket_type_id"
+                                                        name="ticket_type_id"
+                                                        required="true">
+                                                    <option value=""/>
+                                                    <t t-foreach="ticket_types" t-as="type">
+                                                        <option t-attf-value="#{type.id}">
+                                                            <t t-esc="type.name"/>
+                                                        </option>
+                                                    </t>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- subject div -->
+                                    <div
+                                            class="form-group s_website_form_field col-12 col-lg-8 s_website_form_model_required"
+                                            data-type="char" data-name="Field">
+                                        <div class="row s_col_no_resize s_col_no_bgcolor">
+                                            <label style="width: 200px;"
+                                                   class="col-form-label col-sm-auto s_website_form_label"
+                                                   for="o0khkcnwj0e">
+                                                <span class="s_website_form_label_content">Subject</span>
+                                                <span class="s_website_form_mark">*</span>
+                                            </label>
+                                            <div class="col-sm">
+                                                <input type="text" class="form-control s_website_form_input" name="name"
+                                                       required="true" value="" placeholder="" id="o0khkcnwj0e"
+                                                       data-fill-with="undefined"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- desc. div -->
+                                    <div
+                                            class="form-group s_website_form_field col-12 col-lg-8  s_website_form_required"
+                                            data-type="text" data-name="Field">
+                                        <div class="row s_col_no_resize s_col_no_bgcolor">
+                                            <label style="width: 200px;"
+                                                   class="col-form-label col-sm-auto s_website_form_label"
+                                                   for="o9ncs2064z0w">
+                                                <span class="s_website_form_label_content">Description</span>
+                                                <span class="s_website_form_mark">*</span>
+                                            </label>
+                                            <div class="col-sm">
+                                                <textarea class="form-control s_website_form_input" name="description"
+                                                          required="1" placeholder="" id="o9ncs2064z0w" rows="3"/>
+                                                <div class="s_website_form_field_description small form-text text-muted">
+                                                    The more information we have, the sooner your concern will be
+                                                    resolved.
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- attachment div -->
+                                    <div
+                                            class="form-group s_website_form_field col-12 col-lg-8 "
+                                            data-type="binary" data-name="Field">
+                                        <div class="row s_col_no_resize s_col_no_bgcolor">
+                                            <label class=" col-sm-auto s_website_form_label " style="width: 200px"
+                                                   for="attachment">
+                                                <span class="s_website_form_label_content">Attachment</span>
+                                            </label>
+                                            <div class="col-sm">
+                                                <input type="file" class="form-control-file s_website_form_input"
+                                                       name="ticket_attachment" multiple="true" id="attachment" data-fill-with="undefined"/>
+                                                <div class="s_website_form_field_description small form-text text-muted">
+                                                    Send us a screenshot or screencast of your screen to help us
+                                                    identify your issue.
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- submit button -->
+                                    <div class="form-group col-12 s_website_form_submit col-lg-8"
+                                         data-name="Submit Button" data-original-title="" title=""
+                                         aria-describedby="tooltip33174">
+                                        <div style="width: 200px;" class="s_website_form_label"/>
+                                        <a href="#" role="button"
+                                           class="btn btn-primary btn-lg s_website_form_send o_default_snippet_text">
+                                            Submit
+                                        </a>
+                                        <span id="s_website_form_result"/>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </section>
+                </div>
+            </t>
+        </template>
+
+    </data>
+</odoo>
